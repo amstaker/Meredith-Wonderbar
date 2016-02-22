@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * @file
+ * Adds the ramp wonderbar to node pages.
+ */
+
+/**
+ * Page callback: Form constructor for the Wonderbar administration form.
+ */
+function meredith_wonderbar_menu() {
+  $items = array();
+
+  $items['admin/config/services/meredith_wonderbar'] = array(
+    'title' => 'Meredith Wonderbar Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('meredith_wonderbar_admin'),
+    'access arguments' => array('access meredith_wonderbar settings'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'meredith_wonderbar.admin.inc'
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function meredith_wonderbar_page_build(&$page) {
+  $node = menu_get_object();
+  $enabled = variable_get('meredith_wonderbar_enabled', FALSE);
+  // Grabs the node types from admin.inc.
+  $show_nodes_array = variable_get('meredith_wonderbar_shownodes_nodes_toshow', array(''));
+  $is_node_type = $node && !empty($show_nodes_array[$node->type]);
+  // Check to ensure js only appears on specific node type(s).
+  if ($enabled && $is_node_type) {
+    // Add a render array for a script tag to the page_bottom region, which
+    // will be rendered into html.tpl.php's $page_bottom in
+    // template_process_html(). This methodology is used because hook_add_js
+    // cannot be injected into the foot with data attributes.
+    $page['page_bottom']['ramp_embed_js'] = array(
+      '#theme' => 'html_tag',
+      '#tag' => 'script',
+      '#weight' => variable_get('meredith_wonderbar_weight', ''),
+      // We need to add an empty string for #value so the script tag will be
+  	// properly closed with </script>.
+    '#value' => '',
+      '#attributes' => array(
+        'data-ramp-target' => variable_get('meredith_wonderbar_data_ramp_target_id', ''),
+        'data-ramp-widget' => variable_get('meredith_wonderbar_data_ramp_widget_id', ''),
+        'data-ramp-playlist-ids' => variable_get('meredith_wonderbar_data_ramp_playlist_ids'),
+        'data-ramp-api-key' => variable_get('meredith_wonderbar_data_ramp_api_key', ''),
+        'src' => variable_get('meredith_wonderbar_url_source', ''),
+      ),
+    );
+  }
+}
